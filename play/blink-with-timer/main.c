@@ -1,23 +1,28 @@
 /*
- * Servo program: used to control the servo by a potentiometer.
- * I wrote this program to re-teach myself the controls of the timer
- * and of the ADC.
+ * Blink the lights using the built-in timers instead of a loop.
+ * I wrote this program to give some practice using the timers.
  */
+
+//LEDs are on P1.6 and P1.0
 
 #include <msp430.h>
 
 void main(void) {
-	volatile unsigned int count;	//You must declare your variables in C
-  // notice the label volatile. What happens if you remove this label?
-	WDTCTL = WDTPW + WDTHOLD;     //Stop WDT
-	P1DIR = 0x41;			//Set P1 output direction
-	P1OUT = 0x01;			//Set the output
-	
-	while (1){				//Loop forever
-		count = 60000;
-		while(count != 0) {
-			count--;		//decrement
-		}
-		P1OUT = P1OUT ^ 0x41;	//bitwise xor the output with 0x41
-	}
+    unsigned int count_until = 65535; //maximum is 16 bits, or 65535
+
+	WDTCTL = WDTPW + WDTHOLD;  //turn off the watchdog timer
+    P1DIR = BIT0 + BIT6; //Set P1.0 and P1.6 to outputs
+    P1OUT = BIT0 + BIT6;
+   
+    TACCR0 = count_until;
+
+    TACTL = TASSEL_2 + ID_1; //SMCLK
+    TACTL += MC_1; //Start the timer
+}
+
+// Timer interrupt service routine
+void __attribute__ ((interrupt(PORT1_VECTOR)))  PORT1_ISR(void)
+{ 					//code goes here 
+  P1OUT ^= 0x41;           // toggle the LEDS
+  P1IFG &= ~0x08;          // Clear P1.3 IFG. If you don't, it just happens again.
 }
