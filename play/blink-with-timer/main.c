@@ -7,6 +7,7 @@
 
 #include <msp430.h>
 
+unsigned int timerCount = 0;
 void main(void) {
     unsigned int count_until = 65535; //maximum is 16 bits, or 65535
 
@@ -14,15 +15,23 @@ void main(void) {
     P1DIR = BIT0 + BIT6; //Set P1.0 and P1.6 to outputs
     P1OUT = BIT0 + BIT6;
    
-    TACCR0 = count_until;
+//    TACCR0 = count_until;
 
-    TACTL = TASSEL_2 + ID_1; //SMCLK
-    TACTL += MC_1; //Start the timer
+    TACTL = TASSEL_2; //SMCLK
+    TACTL |= ID_1; //Don't divide the clock input by an amount
+
+    TACCTL0 = CCIE; //Enable interrupt on timer completion
+
+    TACTL |= MC_2; //Start the timer
+    _BIS_SR(GIE);
+//    _BIS_SR (LPM4_bits + GIE);	//Turn on interrupts and go into the lowest
 }
 
 // Timer interrupt service routine
-void __attribute__ ((interrupt(PORT1_VECTOR)))  PORT1_ISR(void)
+void __attribute__ ((interrupt(TIMER0_A0_VECTOR)))  PORT1_ISR(void)
 { 					//code goes here 
-  P1OUT ^= 0x41;           // toggle the LEDS
-  P1IFG &= ~0x08;          // Clear P1.3 IFG. If you don't, it just happens again.
+    timerCount = (timerCount + 1) % 8;
+    if(timerCount == 0){
+        P1OUT ^= (BIT0 + BIT6); //toggle the LEDs
+    }
 }

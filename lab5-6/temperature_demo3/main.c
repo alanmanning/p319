@@ -64,10 +64,7 @@
 #define     TXD                   BIT1                      // TXD on P1.1
 #define     RXD                   BIT2                      // RXD on P1.2
 
-#define     PreAppMode            0
-#define     RunningMode           1
 //   Conditions for 9600 Baud SW UART, SMCLK = 1MHz
-
 #define     Bitime                13
 // duration of 1 bit, measured in timer A clock cycles.
 // the main clock runs at 1MHz. TimerA runs at 1MHz/8. 
@@ -282,34 +279,6 @@ __interrupt void port1_isr(void)
   __bic_SR_register_on_exit(LPM3_bits); // take us out of low power mode
   
 }
-
-// WDT Interrupt Service Routine used to de-bounce button press
-
-#if defined(__TI_COMPILER_VERSION__)
-#pragma vector=WDT_VECTOR
-__interrupt void wdt_isr(void)
-#else
-  void __attribute__ ((interrupt(WDT_VECTOR))) wdt_isr (void)
-#endif
-
-{
-    IE1 &= ~WDTIE;                   /* disable watchdog interrupt */
-    IFG1 &= ~WDTIFG;                 /* clear interrupt flag */
-    WDTCTL = WDTPW + WDTHOLD;        /* put WDT back in hold state */
-    P1IE |= BUTTON;             /* Debouncing complete - reenable port 1 interrupts*/
-}
-
-// ADC10 interrupt service routine
-#if defined(__TI_COMPILER_VERSION__)
-#pragma vector=ADC10_VECTOR
-__interrupt void adc10_isr(void)
-#else
-  void __attribute__ ((interrupt(ADC10_VECTOR))) adc10_isr (void)
-#endif
-{
-  __bic_SR_register_on_exit(CPUOFF);        // Restart the cpu
-}
-
 
 // Timer A0 interrupt service routine - 
 #if defined(__TI_COMPILER_VERSION__)

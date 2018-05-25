@@ -161,6 +161,7 @@ extern volatile unsigned char TLV_ADC10_1_LEN;
 # 1424 "/home/alan/ti/msp430_gcc/include/msp430.h" 2
 # 9 "main.c" 2
 
+unsigned int timerCount = 0;
 void main(void) {
     unsigned int count_until = 65535;
 
@@ -168,8 +169,23 @@ void main(void) {
     P1DIR = (0x0001) + (0x0040);
     P1OUT = (0x0001) + (0x0040);
 
-    TA0CCR0 = count_until;
 
-    TA0CTL = (0x0200) + (0x0040);
-    TA0CTL += (0x0010);
+
+    TA0CTL = (0x0200);
+    TA0CTL |= (0x0040);
+
+    TA0CCTL0 = (0x0010);
+
+    TA0CTL |= (0x0020);
+    __asm__ __volatile__ ("bis.w %0, SR" : : "ri"((unsigned int) (0x0008)) );
+
+}
+
+
+void __attribute__ ((interrupt((10)))) PORT1_ISR(void)
+{
+    timerCount = (timerCount + 1) % 8;
+    if(timerCount == 0){
+        P1OUT ^= ((0x0001) + (0x0040));
+    }
 }
